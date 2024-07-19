@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+
+scp.txt
+*.DS_Store
+build
+dist
+PKG-INFO
+simu.py
+*.ipynb
+dupli.py
+PMpred.egg-info
