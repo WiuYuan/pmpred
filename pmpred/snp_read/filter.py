@@ -215,8 +215,10 @@ def filter_by_REF_ALT(betastats, phestats):
             phestats["X"][:, j] = 2 - phestats["X"][:, j]
 
 
-def PM_get_LD_subprocess(P, i):
-    R = np.linalg.inv(P)
+def PM_get_LD_subprocess(subinput):
+    P, i = subinput
+    Pid = sorted(set(P.tocoo().row))
+    R = sp.linalg.inv(P[Pid][:, Pid])
     D = R.diagonal()
     print("PM_get_LD_subprocess block:", i)
     return R / np.outer(D, D)
@@ -225,7 +227,7 @@ def PM_get_LD_subprocess(P, i):
 def PM_get_LD(PM, para):
     subinput = []
     for i in range(len(PM)):
-        subinput.append(PM[i]["precision"])
+        subinput.append((PM[i]["precision"], i))
     results = Parallel(n_jobs=para["n_jobs"])(
         delayed(PM_get_LD_subprocess)(d) for d in subinput
     )
