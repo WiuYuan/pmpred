@@ -108,6 +108,8 @@ def ldpred_grid(PM, snplist, sumstats, para):
         curr_beta.append(np.zeros(m))
         avg_beta.append(np.zeros(m))
         dotprods.append(np.zeros(m))
+        N = np.array(sumstats[i]["N"]).astype(float)
+        scale_size.append(np.sqrt(N) * np.array(sumstats[i]["beta_se"]).astype(float))
 
     for k in range(-para["burn_in"], para["num_iter"]):
         print("ldpred_grid step:", k, "p:", p, "h2:", h2)
@@ -117,9 +119,6 @@ def ldpred_grid(PM, snplist, sumstats, para):
         for i in range(len(PM)):
             N = np.array(sumstats[i]["N"]).astype(float)
             beta_hat = np.array(sumstats[i]["beta"]).astype(float)
-            scale_size.append(
-                np.sqrt(N) * np.array(sumstats[i]["beta_se"]).astype(float)
-            )
             subinput.append(
                 (
                     PM[i],
@@ -145,7 +144,7 @@ def ldpred_grid(PM, snplist, sumstats, para):
         if len(sumstats[i]["beta"]) == 0:
             beta_grid.append(np.array([]))
         else:
-            beta_grid.append(avg_beta[i] / para["num_iter"])
+            beta_grid.append(avg_beta[i] / para["num_iter"] * scale_size[i])
     return beta_grid, {"p": p, "h2": h2}
 
 
@@ -195,6 +194,8 @@ def ldpred_auto(PM, snplist, sumstats, para):
         curr_beta.append(np.zeros(m))
         avg_beta.append(np.zeros(m))
         dotprods.append(np.zeros(m))
+        N = np.array(sumstats[i]["N"]).astype(float)
+        scale_size.append(np.sqrt(N) * np.array(sumstats[i]["beta_se"]).astype(float))
 
     for k in range(-para["burn_in"], para["num_iter"]):
         Mc = 0
@@ -205,9 +206,6 @@ def ldpred_auto(PM, snplist, sumstats, para):
         for i in range(len(PM)):
             N = np.array(sumstats[i]["N"]).astype(float)
             beta_hat = np.array(sumstats[i]["beta"]).astype(float)
-            scale_size.append(
-                np.sqrt(N) * np.array(sumstats[i]["beta_se"]).astype(float)
-            )
             subinput.append(
                 (
                     PM[i],
