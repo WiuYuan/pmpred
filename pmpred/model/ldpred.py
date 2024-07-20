@@ -69,7 +69,7 @@ def ldpred_grid_subprocess(subinput):
         subinput
     )
     if len(N) == 0:
-        return np.array([]), np.array([]), np.array([]), 0, 0
+        return np.array([]), np.array([]), np.array([])
     LD = PM["LD"]
     if isinstance(LD[0], np.float64):
         LD = csr_matrix([[LD[0]]])
@@ -110,7 +110,6 @@ def ldpred_grid(PM, snplist, sumstats, para):
         dotprods.append(np.zeros(m))
 
     for k in range(-para["burn_in"], para["num_iter"]):
-        Mc = 0
         print("ldpred_grid step:", k, "p:", p, "h2:", h2)
         h2_per_var = h2 / (M * p)
         inv_odd_p = (1 - p) / p
