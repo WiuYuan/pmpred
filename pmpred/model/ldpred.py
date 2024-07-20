@@ -174,8 +174,6 @@ def ldpred_auto(PM, snplist, sumstats, para):
         inv_odd_p = (1 - p) / p
         subinput = []
         for i in range(len(PM)):
-            if len(sumstats[i]["beta"]) == 0:
-                continue
             N = np.array(sumstats[i]["N"]).astype(float)
             beta_hat = np.array(sumstats[i]["beta"]).astype(float)
             scale_size.append(
