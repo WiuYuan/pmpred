@@ -145,7 +145,12 @@ def ldpred_grid(PM, snplist, sumstats, para):
             beta_grid.append(np.array([]))
         else:
             beta_grid.append(avg_beta[i] / para["num_iter"] * scale_size[i])
-    return beta_grid, {"p": p, "h2": h2}
+    return beta_grid, {
+        "p": p,
+        "h2": h2,
+        "burn_in": para["burn_in"],
+        "num_iter": para["num_iter"],
+    }
 
 
 def ldpred_auto_subprocess(subinput):
@@ -236,4 +241,9 @@ def ldpred_auto(PM, snplist, sumstats, para):
             beta_auto_set.append(np.array([]))
         else:
             beta_auto_set.append(avg_beta[i] / para["num_iter"] * scale_size[i])
-    return beta_auto_set, {"p": p, "h2": h2}
+    return beta_auto_set, {
+        "p": p,
+        "h2": h2,
+        "burn_in": para["burn_in"],
+        "num_iter": para["num_iter"],
+    }
