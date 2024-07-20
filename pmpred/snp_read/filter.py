@@ -216,18 +216,18 @@ def filter_by_REF_ALT(betastats, phestats):
 
 
 def PM_get_LD_subprocess(subinput):
-    P, i = subinput
-    Pid = sorted(set(P.tocoo().row))
-    R = sp.linalg.inv(P[Pid][:, Pid])
+    P, Pid, i = subinput
+    # Pid = sorted(set(P.tocoo().row))
+    R = sp.linalg.inv(P.tocsc())[Pid][:, Pid].toarray()
     D = R.diagonal()
     print("PM_get_LD_subprocess block:", i)
     return R / np.outer(D, D)
 
 
-def PM_get_LD(PM, para):
+def PM_get_LD(PM, snplist, para):
     subinput = []
     for i in range(len(PM)):
-        subinput.append((PM[i]["precision"], i))
+        subinput.append((PM[i]["precision"], snplist[i]["index"], i))
     results = Parallel(n_jobs=para["n_jobs"])(
         delayed(PM_get_LD_subprocess)(d) for d in subinput
     )

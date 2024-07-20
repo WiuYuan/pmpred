@@ -93,11 +93,11 @@ def get_para():
     para["h2"] = 0.5
     para["p"] = 0.18
     para["sumstats_block_size"] = 10
-    para["PM_size"] = 11
+    para["PM_size"] = 20
     para["block_num"] = 10
     para["burn_in"] = 50
     para["num_iter"] = 100
-    para["N"] = 100000
+    para["N"] = 1000
     para["prop"] = 1
     para["taylor_rtol"] = 0.01
     para["h2_min"] = 0

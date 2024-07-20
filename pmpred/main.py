@@ -315,13 +315,13 @@ def main():
         snplist = pm.read.snplist_read(args.snp)
         pm.filter.filter_by_PM(PM, snplist)
         pm.filter.filter_by_unique_snplist(snplist)
-        pm.filter.PM_get_LD(PM, para)
         sumstats = pm.filter.filter_by_sumstats_parallel(
             PM, snplist, sumstats_list, para
         )
         if args.usepvalue:
             pm.generate.generate_beta_and_se_from_p_and_z(sumstats)
         pm.check.check_same_rsid(snplist, sumstats)
+        pm.filter.PM_get_LD(PM, snplist, para)
         beta_ldpred_auto, outpara = pm.ldpred.ldpred_auto(PM, snplist, sumstats, para)
         end_time = time.time()
         pm.write.sumstats_beta_write(

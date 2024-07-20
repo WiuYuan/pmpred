@@ -65,8 +65,7 @@ def ldpred_inf(PM, snplist, sumstats, para):
 
 
 def ldpred_gibbs_one_sampling(PM, snplist, beta_hat, N, M, para):
-    LD = PM["LD"][snplist["index"]][:, snplist["index"]]
-    # LD = inv(PM["precision"])
+    LD = PM["LD"]
     if isinstance(LD[0], np.float64):
         LD = csr_matrix([[LD[0]]])
     m = len(beta_hat)
@@ -125,7 +124,7 @@ def ldpred_auto_subprocess(subinput):
     PM, snplist, beta_hat, dotprods, curr_beta, N, h2_per_var, inv_odd_p, para = (
         subinput
     )
-    LD = PM["LD"][snplist["index"]][:, snplist["index"]]
+    LD = PM["LD"]
     if isinstance(LD[0], np.float64):
         LD = csr_matrix([[LD[0]]])
     m = len(beta_hat)
