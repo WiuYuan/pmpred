@@ -158,6 +158,7 @@ def ldpred_auto(PM, snplist, sumstats, para):
     curr_beta = []
     avg_beta = []
     dotprods = []
+    scale_size = []
     M = 0
     for i in range(len(sumstats)):
         m = len(sumstats[i]["beta"])
@@ -177,11 +178,14 @@ def ldpred_auto(PM, snplist, sumstats, para):
                 continue
             N = np.array(sumstats[i]["N"]).astype(float)
             beta_hat = np.array(sumstats[i]["beta"]).astype(float)
+            scale_size.append(
+                np.sqrt(N[i]) * np.array(sumstats[i]["beta_se"]).astype(float)
+            )
             subinput.append(
                 (
                     PM[i],
                     snplist[i],
-                    beta_hat,
+                    beta_hat / scale_size[i],
                     dotprods[i],
                     curr_beta[i],
                     N,
@@ -206,5 +210,5 @@ def ldpred_auto(PM, snplist, sumstats, para):
         if len(sumstats[i]["beta"]) == 0:
             beta_auto_set.append(np.array([]))
         else:
-            beta_auto_set.append(avg_beta[i] / para["num_iter"])
+            beta_auto_set.append(avg_beta[i] / para["num_iter"] * scale_size[i])
     return beta_auto_set, {"p": p, "h2": h2}
