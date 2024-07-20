@@ -64,60 +64,90 @@ def ldpred_inf(PM, snplist, sumstats, para):
     return beta_inf_set, {"h2": para["h2"]}
 
 
-def ldpred_gibbs_one_sampling(PM, snplist, beta_hat, N, M, para):
+def ldpred_grid_subprocess(subinput):
+    PM, snplist, beta_hat, dotprods, curr_beta, N, h2_per_var, inv_odd_p, para = (
+        subinput
+    )
+    if len(N) == 0:
+        return np.array([]), np.array([]), np.array([]), 0, 0
     LD = PM["LD"]
     if isinstance(LD[0], np.float64):
         LD = csr_matrix([[LD[0]]])
     m = len(beta_hat)
-    h2 = para["h2"]
-    p = para["p"]
-    curr_beta = np.zeros(m)
-    avg_beta = np.zeros(m)
-    dotprods = np.zeros(m)
-    h2_per_var = h2 / (M * p)
-    inv_odd_p = (1 - p) / p
-    for k in range(-para["burn_in"], para["num_iter"]):
-        for j in range(m):
-            res_beta_hat_j = beta_hat[j] - (dotprods[j] - curr_beta[j])
-            # res_beta_hat_j = beta_hat[j] - dotprods[j]
-            C1 = h2_per_var * N[j]
-            C2 = 1 / (1 + 1 / C1)
-            C3 = C2 * res_beta_hat_j
-            C4 = C2 / N[j]
-            post_p_j = 1 / (1 + inv_odd_p * np.sqrt(1 + C1) * np.exp(-C3 * C3 / C4 / 2))
-            diff = -curr_beta[j]
-            # if post_p_j < p:
-            #     curr_beta[j] = 0
-            if post_p_j > np.random.rand():
-                curr_beta[j] = np.random.normal(C3, np.sqrt(C4))
-                diff += curr_beta[j]
-            else:
-                curr_beta[j] = 0
-            if k >= 0:
-                avg_beta[j] += C3 * post_p_j
-            if diff != 0:
-                dotprods += LD[:, j] * diff
-    return avg_beta / para["num_iter"]
+    mean = np.zeros(m)
+    for j in range(m):
+        res_beta_hat_j = beta_hat[j] - (dotprods[j] - curr_beta[j])
+        C1 = h2_per_var * N[j]
+        C2 = 1 / (1 + 1 / C1)
+        C3 = C2 * res_beta_hat_j
+        C4 = C2 / N[j]
+        post_p_j = 1 / (1 + inv_odd_p * np.sqrt(1 + C1) * np.exp(-C3 * C3 / C4 / 2))
+        diff = -curr_beta[j]
+        if post_p_j > np.random.rand():
+            curr_beta[j] = np.random.normal(C3, np.sqrt(C4))
+            diff += curr_beta[j]
+            mean[j] = C3 * post_p_j
+        else:
+            curr_beta[j] = 0
+        if diff != 0:
+            dotprods += LD[:, j] * diff
+    return mean, curr_beta, dotprods
 
 
 def ldpred_grid(PM, snplist, sumstats, para):
-    beta_gibbs_set = []
+    p = para["p"]
+    h2 = para["h2"]
+    curr_beta = []
+    avg_beta = []
+    dotprods = []
+    scale_size = []
     M = 0
     for i in range(len(sumstats)):
-        M += len(sumstats[i]["beta"])
-    for i in range(len(PM)):
+        m = len(sumstats[i]["beta"])
+        M += m
+        curr_beta.append(np.zeros(m))
+        avg_beta.append(np.zeros(m))
+        dotprods.append(np.zeros(m))
+
+    for k in range(-para["burn_in"], para["num_iter"]):
+        Mc = 0
+        print("ldpred_grid step:", k, "p:", p, "h2:", h2)
+        h2_per_var = h2 / (M * p)
+        inv_odd_p = (1 - p) / p
+        subinput = []
+        for i in range(len(PM)):
+            N = np.array(sumstats[i]["N"]).astype(float)
+            beta_hat = np.array(sumstats[i]["beta"]).astype(float)
+            scale_size.append(
+                np.sqrt(N) * np.array(sumstats[i]["beta_se"]).astype(float)
+            )
+            subinput.append(
+                (
+                    PM[i],
+                    snplist[i],
+                    beta_hat / scale_size[i],
+                    dotprods[i],
+                    curr_beta[i],
+                    N,
+                    h2_per_var,
+                    inv_odd_p,
+                    para,
+                )
+            )
+        results = Parallel(n_jobs=para["n_jobs"])(
+            delayed(ldpred_grid_subprocess)(d) for d in subinput
+        )
+        for i in range(len(PM)):
+            mean, curr_beta[i], dotprods[i] = results[i]
+            if k >= 0:
+                avg_beta[i] += mean
+    beta_grid = []
+    for i in range(len(sumstats)):
         if len(sumstats[i]["beta"]) == 0:
-            beta_gibbs_set.append([])
-            continue
-        N = np.array(sumstats[i]["N"]).astype(float)
-        beta_se = np.array(sumstats[i]["beta_se"]).astype(float)
-        beta = np.array(sumstats[i]["beta"]).astype(float)
-        # scale = np.sqrt(N * beta_se**2 + beta**2)
-        scale = 1
-        beta_hat = beta / scale
-        beta_gibbs = ldpred_gibbs_one_sampling(PM[i], snplist[i], beta_hat, N, M, para)
-        beta_gibbs_set.append(beta_gibbs * scale)
-    return beta_gibbs_set, {"p": para["p"], "h2": para["h2"]}
+            beta_grid.append(np.array([]))
+        else:
+            beta_grid.append(avg_beta[i] / para["num_iter"] * scale_size[i])
+    return beta_grid, {"p": p, "h2": h2}
 
 
 def ldpred_auto_subprocess(subinput):
@@ -169,7 +199,7 @@ def ldpred_auto(PM, snplist, sumstats, para):
 
     for k in range(-para["burn_in"], para["num_iter"]):
         Mc = 0
-        print("step:", k, "p:", p, "h2:", h2)
+        print("ldpred_auto step:", k, "p:", p, "h2:", h2)
         h2_per_var = h2 / (M * p)
         inv_odd_p = (1 - p) / p
         subinput = []

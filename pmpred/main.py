@@ -332,6 +332,40 @@ def main():
             outpara,
             head_name,
         )
+    elif args.method == "ldpred_grid":
+        if not args.pm:
+            parser.error("You must specify a Precision Matrix Folder Path.")
+        if not args.snp:
+            parser.error("You must specify a Snplists Folder Path.")
+        if not args.sumstats:
+            parser.error("You must specify a Sumstats File.")
+        start_time = time.time()
+        sumstats_list = pm.read.sumstats_read(args.sumstats, args.split, head_name)
+        if args.N:
+            pm.generate.generate_N_in_sumstats_list(sumstats_list, args.N)
+        pm.filter.filter_sumstats(sumstats_list)
+        pm.filter.filter_by_unique_sumstats(sumstats_list)
+        PM = pm.read.PM_read(args.pm)
+        snplist = pm.read.snplist_read(args.snp)
+        pm.filter.filter_by_PM(PM, snplist)
+        pm.filter.filter_by_unique_snplist(snplist)
+        sumstats = pm.filter.filter_by_sumstats_parallel(
+            PM, snplist, sumstats_list, para
+        )
+        if args.usepvalue:
+            pm.generate.generate_beta_and_se_from_p_and_z(sumstats)
+        pm.check.check_same_rsid(snplist, sumstats)
+        pm.filter.PM_get_LD(PM, snplist, para)
+        beta_ldpred_grid, outpara = pm.ldpred.ldpred_grid(PM, snplist, sumstats, para)
+        end_time = time.time()
+        pm.write.sumstats_beta_write(
+            sumstats,
+            beta_ldpred_grid,
+            args.out,
+            end_time - start_time,
+            outpara,
+            head_name,
+        )
     elif args.method == "normalizepm":
         if not args.pm:
             parser.error("You must specify a Precision Matrix Folder Path.")
