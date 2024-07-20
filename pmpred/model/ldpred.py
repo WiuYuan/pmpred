@@ -124,6 +124,8 @@ def ldpred_auto_subprocess(subinput):
     PM, snplist, beta_hat, dotprods, curr_beta, N, h2_per_var, inv_odd_p, para = (
         subinput
     )
+    if len(N) == 0:
+        return np.array([]), np.array([]), np.array([]), 0, 0
     LD = PM["LD"]
     if isinstance(LD[0], np.float64):
         LD = csr_matrix([[LD[0]]])
