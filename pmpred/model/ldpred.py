@@ -145,7 +145,7 @@ def ldpred_grid(PM, snplist, sumstats, para):
         if len(sumstats[i]["beta"]) == 0:
             beta_grid.append(np.array([]))
         else:
-            beta_grid.append(avg_beta[i] / para["num_iter"] * scale_size[i])
+            beta_grid.append(avg_beta[i] / para["num_iter"])
     return beta_grid, {"p": p, "h2": h2}
 
 
