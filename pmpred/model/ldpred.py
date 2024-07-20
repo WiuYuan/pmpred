@@ -177,7 +177,7 @@ def ldpred_auto(PM, snplist, sumstats, para):
             N = np.array(sumstats[i]["N"]).astype(float)
             beta_hat = np.array(sumstats[i]["beta"]).astype(float)
             scale_size.append(
-                np.sqrt(N[i]) * np.array(sumstats[i]["beta_se"]).astype(float)
+                np.sqrt(N) * np.array(sumstats[i]["beta_se"]).astype(float)
             )
             subinput.append(
                 (
