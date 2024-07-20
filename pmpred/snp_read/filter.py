@@ -219,7 +219,7 @@ def PM_get_LD_subprocess(subinput):
     P, Pid, i = subinput
     # Pid = sorted(set(P.tocoo().row))
     R = sp.linalg.inv(P.tocsc())[Pid][:, Pid].toarray()
-    D = R.diagonal()
+    D = np.sqrt(R.diagonal())
     print("PM_get_LD_subprocess block:", i)
     return R / np.outer(D, D)
 
