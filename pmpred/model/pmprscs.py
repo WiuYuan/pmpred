@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import geninvgauss
 from joblib import Parallel, delayed
-from scipy.sparse.linalg import cg, gmres
+from scipy.sparse.linalg import lgmres, gmres
 
 
 def sparse_LD_times(P, x, Pidn0, para):
@@ -17,7 +17,7 @@ def pmprscs_Q_times(P, x, psi, Pid, para):
         return np.array([])
     y = np.zeros(P.shape[0])
     y[Pid] = x * np.sqrt(psi)
-    return np.sqrt(psi) * cg(P, y, rtol=para["rtol"])[0][Pid]
+    return np.sqrt(psi) * gmres(P, y, rtol=para["rtol"])[0][Pid]
 
 
 def pmprscs_auto_subprocess_beta(subinput):
@@ -147,15 +147,15 @@ def pmprscs_auto(PM, snplist, sumstats, para):
         sigma2 = 1 / np.random.gamma((N_total + M) / 2, 1 / err)
         subinput = []
         for i in range(len(PM)):
-            subinput.append((N[i], sigma2, curr_beta[i], a, delta[i]))
-        psi = Parallel(n_jobs=para["n_jobs"])(
-            delayed(pmprscs_auto_subprocess_psi)(d) for d in subinput
-        )
-        subinput = []
-        for i in range(len(PM)):
             subinput.append((a, b, psi[i], phi))
         delta = Parallel(n_jobs=para["n_jobs"])(
             delayed(pmprscs_auto_subprocess_delta)(d) for d in subinput
+        )
+        subinput = []
+        for i in range(len(PM)):
+            subinput.append((N[i], sigma2, curr_beta[i], a, delta[i]))
+        psi = Parallel(n_jobs=para["n_jobs"])(
+            delayed(pmprscs_auto_subprocess_psi)(d) for d in subinput
         )
         sum_delta = 0
         for i in range(len(PM)):

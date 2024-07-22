@@ -25,6 +25,23 @@ def sumstats_beta_write(sumstats, beta, output_path, run_time, outpara, head_nam
                 f.write("\n")
 
 
+def sumstats_write(sumstats, output_path):
+    output_key = ["rsid", "REF", "ALT", "beta_se", "beta"]
+    with open(output_path, "w") as f:
+        f.write("\t".join([key for key in output_key]))
+        f.write("\n")
+        for i in range(len(sumstats["rsid"])):
+            for key in output_key:
+                if key in sumstats:
+                    if isinstance(sumstats[key][i], str):
+                        f.write(sumstats[key][i] + "\t")
+                    elif key == "N":
+                        f.write(f"{int(sumstats[key][i])}\t")
+                    else:
+                        f.write(f"{sumstats[key][i]:.6f}\t")
+            f.write("\n")
+
+
 def PM_write(PM, output_folder_path):
     for i in range(len(PM)):
         with open(output_folder_path + "/" + PM[i]["filename"], "w") as f:

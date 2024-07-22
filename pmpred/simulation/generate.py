@@ -1,9 +1,10 @@
 import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.stats import norm
+import pmpred as pm
 
 
-def generate_sumstats_beta(PM, snplist, para):
+def generate_sumstats_beta_from_PM(PM, snplist, para):
     sumstats = []
     beta_true = []
     m = 0
@@ -32,10 +33,56 @@ def generate_sumstats_beta(PM, snplist, para):
         R = PM[i]["LD"]
         sumstats_block["beta"] = np.random.multivariate_normal(
             R @ beta_true[i], R * (1 - para["h2"]) / para["N"]
-        )
+        ).tolist()
         sumstats.append(sumstats_block)
 
     return sumstats, beta_true
+
+
+def generate_sumstats_beta_from_bedstats(bedstats, snplist, para):
+    sumstats = {}
+    print("Get the genotype matrix")
+    genotype = bedstats["bed"].compute()
+    geno_rsid = bedstats["bim"]["snp"].tolist()
+    geno_rsid_dict = {value: index for index, value in enumerate(geno_rsid)}
+    snplist_rsid = []
+    bed_rsid = []
+    for i in range(len(snplist)):
+        rsid1 = [
+            index
+            for index, value in enumerate(snplist[i]["rsid"])
+            if value in geno_rsid_dict
+        ]
+        snplist_rsid += rsid1
+        rsid2 = [
+            geno_rsid_dict[value]
+            for index, value in enumerate(snplist[i]["rsid"])
+            if value in geno_rsid_dict
+        ]
+        bed_rsid += rsid2
+        if i % 137 == 0:
+            print("generate_sumstats_beta_from_bedstats block:", i)
+    M = len(snplist_rsid)
+    sigma = para["h2"] / (M * para["p"])
+    z = (np.random.rand(M) < para["p"]).astype(int)
+    beta_true_total = z * np.random.normal(0, sigma, M)
+    R = genotype[bed_rsid, :]
+    nan_columns = np.any(np.isnan(R), axis=0)
+    R = R[:, ~nan_columns]
+    row_means = np.mean(R, axis=1, keepdims=True)
+    R = R - row_means
+    row_stds = np.sqrt(np.sum(np.square(R), axis=1, keepdims=True))
+    R = R / row_stds
+    R = R @ R.T
+    sumstats["beta"] = np.random.multivariate_normal(
+        R @ np.array(beta_true_total), R * (1 - para["h2"]) / para["N"]
+    ).tolist()
+    sumstats["N"] = np.ones(M) * para["N"]
+    sumstats["beta_se"] = np.ones(M)
+    sumstats["rsid"] = bedstats["bim"]["snp"][bed_rsid].tolist()
+    sumstats["REF"] = bedstats["bim"]["a0"][bed_rsid].tolist()
+    sumstats["ALT"] = bedstats["bim"]["a1"][bed_rsid].tolist()
+    return sumstats, beta_true_total
 
 
 def generate_phenotype(phestats, beta, para):
@@ -107,4 +154,5 @@ def get_para():
     para["rtol"] = 1e-10
     para["prscs_a"] = 1.5
     para["prscs_b"] = 0.5
+    para["output_key"] = ["rsid", "REF", "beta_joint"]
     return para

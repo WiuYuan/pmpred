@@ -2,6 +2,7 @@
 
 import os
 from scipy.sparse import csr_matrix
+import pandas_plink as ppl
 
 
 def snplist_read(snplist_folder_path):
@@ -68,23 +69,9 @@ def PM_read(precision_folder_path):
     return PM
 
 
-# def sumstats_read(sumstats_path):
-#     sumstats = {}
-#     with open(sumstats_path, "r") as file:
-#         tot = 0
-#         for line in file:
-#             line_list = line.strip().split(",")
-#             if tot == 0:
-#                 title_list = line_list
-#                 for i in range(len(title_list)):
-#                     sumstats[title_list[i]] = []
-#             else:
-#                 for i in range(len(title_list)):
-#                     sumstats[title_list[i]].append(line_list[i])
-#             tot = tot + 1
-#     sumstats["REF"] = sumstats.pop("a0")
-#     sumstats["ALT"] = sumstats.pop("a1")
-#     return sumstats
+def bed_read(bed_path):
+    (bim, fam, bed) = ppl.read_plink(bed_path)
+    return {"bed": bed, "bim": bim, "fam": fam}
 
 
 def sumstats_read(sumstats_path, split, head_name):
