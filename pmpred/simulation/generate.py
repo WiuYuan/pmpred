@@ -128,6 +128,14 @@ def generate_beta_and_se_from_p_and_z(sumstats):
         sumstats[i]["beta_se"] = np.ones(len(sumstats[i]["beta"])).tolist()
 
 
+def generate_p_and_z_from_beta_and_se(sumstats):
+    print("Generate p value and z scores from beta and beta_se in sumstats")
+    sumstats["z"] = (
+        np.array(sumstats["beta"]) / np.array(sumstats["beta_se"])
+    ).tolist()
+    sumstats["p"] = (2 * (1 - norm.cdf(np.abs(np.array(sumstats["z"]))))).tolist()
+
+
 def generate_N_in_sumstats_list(sumstats_list, N):
     print("Generate N in sumstats_list")
     sumstats_list["N"] = (np.ones(len(sumstats_list["rsid"])) * N).tolist()

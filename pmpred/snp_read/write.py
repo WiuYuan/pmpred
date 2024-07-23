@@ -25,20 +25,25 @@ def sumstats_beta_write(sumstats, beta, output_path, run_time, outpara, head_nam
                 f.write("\n")
 
 
-def sumstats_write(sumstats, output_path):
-    output_key = ["rsid", "REF", "ALT", "beta_se", "beta"]
+def sumstats_write(sumstats, split, out_head_name, output_path):
     with open(output_path, "w") as f:
-        f.write("\t".join([key for key in output_key]))
+        for j in range(len(list(out_head_name.keys()))):
+            key = list(out_head_name.keys())[j]
+            f.write(out_head_name[key])
+            if j != len(list(out_head_name.keys())) - 1:
+                f.write(split)
         f.write("\n")
         for i in range(len(sumstats["rsid"])):
-            for key in output_key:
-                if key in sumstats:
-                    if isinstance(sumstats[key][i], str):
-                        f.write(sumstats[key][i] + "\t")
-                    elif key == "N":
-                        f.write(f"{int(sumstats[key][i])}\t")
-                    else:
-                        f.write(f"{sumstats[key][i]:.6f}\t")
+            for j in range(len(list(out_head_name.keys()))):
+                key = list(out_head_name.keys())[j]
+                if isinstance(sumstats[key][i], str):
+                    f.write(sumstats[key][i])
+                elif key == "N":
+                    f.write(f"{int(sumstats[key][i])}")
+                else:
+                    f.write(f"{sumstats[key][i]:.6f}")
+                if j != len(list(out_head_name.keys())) - 1:
+                    f.write(split)
             f.write("\n")
 
 
