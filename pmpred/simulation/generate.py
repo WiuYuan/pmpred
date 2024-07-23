@@ -74,7 +74,7 @@ def generate_sumstats_beta_from_bedstats(bedstats, snplist, para):
     row_stds = np.sqrt(np.sum(np.square(R), axis=1, keepdims=True))
     R = R / row_stds
     sumstats["beta"] = np.random.normal(size=M)
-    mean = R @ (R.T @ np.array(beta_true_total))
+    mean = R @ (R.T @ sumstats["beta"])
     sumstats["beta"] = (
         mean + np.sqrt((1 - para["h2"]) / para["N"]) * R.T @ sumstats["beta"]
     ).tolist()
