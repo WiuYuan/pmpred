@@ -1,11 +1,131 @@
 import numpy as np
-from scipy.stats import geninvgauss
 from joblib import Parallel, delayed
+import math
+
+
+def psi(x, alpha, lam):
+    f = -alpha * (math.cosh(x) - 1.0) - lam * (math.exp(x) - x - 1.0)
+    return f
+
+
+def dpsi(x, alpha, lam):
+    f = -alpha * math.sinh(x) - lam * (math.exp(x) - 1.0)
+    return f
+
+
+def g(x, sd, td, f1, f2):
+    if (x >= -sd) and (x <= td):
+        f = 1.0
+    elif x > td:
+        f = f1
+    elif x < -sd:
+        f = f2
+
+    return f
+
+
+def gigrnd(p, a, b):
+    # setup -- sample from the two-parameter version gig(lam,omega)
+    p = float(p)
+    a = float(a)
+    b = float(b)
+    lam = p
+    omega = math.sqrt(a * b)
+
+    if lam < 0:
+        lam = -lam
+        swap = True
+    else:
+        swap = False
+
+    alpha = math.sqrt(math.pow(omega, 2) + math.pow(lam, 2)) - lam
+
+    # find t
+    x = -psi(1.0, alpha, lam)
+    if (x >= 0.5) and (x <= 2.0):
+        t = 1.0
+    elif x > 2.0:
+        if (alpha == 0) and (lam == 0):
+            t = 1.0
+        else:
+            t = math.sqrt(2.0 / (alpha + lam))
+    elif x < 0.5:
+        if (alpha == 0) and (lam == 0):
+            t = 1.0
+        else:
+            t = math.log(4.0 / (alpha + 2.0 * lam))
+
+    # find s
+    x = -psi(-1.0, alpha, lam)
+    if (x >= 0.5) and (x <= 2.0):
+        s = 1.0
+    elif x > 2.0:
+        if (alpha == 0) and (lam == 0):
+            s = 1.0
+        else:
+            s = math.sqrt(4.0 / (alpha * math.cosh(1) + lam))
+    elif x < 0.5:
+        if (alpha == 0) and (lam == 0):
+            s = 1.0
+        elif alpha == 0:
+            s = 1.0 / lam
+        elif lam == 0:
+            s = math.log(
+                1.0 + 1.0 / alpha + math.sqrt(1.0 / math.pow(alpha, 2) + 2.0 / alpha)
+            )
+        else:
+            s = min(
+                1.0 / lam,
+                math.log(
+                    1.0
+                    + 1.0 / alpha
+                    + math.sqrt(1.0 / math.pow(alpha, 2) + 2.0 / alpha)
+                ),
+            )
+
+    # find auxiliary parameters
+    eta = -psi(t, alpha, lam)
+    zeta = -dpsi(t, alpha, lam)
+    theta = -psi(-s, alpha, lam)
+    xi = dpsi(-s, alpha, lam)
+
+    p = 1.0 / xi
+    r = 1.0 / zeta
+
+    td = t - r * eta
+    sd = s - p * theta
+    q = td + sd
+
+    # random variate generation
+    while True:
+        U = np.random.random()
+        V = np.random.random()
+        W = np.random.random()
+        if U < q / (p + q + r):
+            rnd = -sd + q * V
+        elif U < (q + r) / (p + q + r):
+            rnd = td - r * math.log(V)
+        else:
+            rnd = -sd + p * math.log(V)
+
+        f1 = math.exp(-eta - zeta * (rnd - t))
+        f2 = math.exp(-theta + xi * (rnd + s))
+        if W * g(rnd, sd, td, f1, f2) <= math.exp(psi(rnd, alpha, lam)):
+            break
+
+    # transform back to the three-parameter version gig(p,a,b)
+    rnd = math.exp(rnd) * (
+        lam / omega + math.sqrt(1.0 + math.pow(lam, 2) / math.pow(omega, 2))
+    )
+    if swap:
+        rnd = 1.0 / rnd
+
+    rnd = rnd / math.sqrt(a / b)
+    return rnd
 
 
 def prscs_auto_subprocess_beta(subinput):
     (D, sigma2, N, psi, beta_hat) = subinput
-    D = D.toarray()
     cov = sigma2 / N * np.linalg.inv(D + np.diag(1 / psi))
     mu = np.linalg.solve(D + np.diag(1 / psi), beta_hat)
     curr_beta = np.random.multivariate_normal(mu, cov)
@@ -16,7 +136,7 @@ def prscs_auto_subprocess_sigma2(subinput):
     curr_beta, beta_hat, D, psi = subinput
     sigma2_para = -2 * np.dot(curr_beta, beta_hat) + np.dot(
         curr_beta,
-        D.toarray() @ curr_beta + curr_beta / psi,
+        D @ curr_beta + curr_beta / psi,
     )
     sum_beta = np.dot(curr_beta, curr_beta / psi)
     return sigma2_para, sum_beta
@@ -24,10 +144,10 @@ def prscs_auto_subprocess_sigma2(subinput):
 
 def prscs_auto_subprocess_psi(subinput):
     N, sigma2, curr_beta, a, delta = subinput
-    khi = N / sigma2 * curr_beta**2
-    psi = geninvgauss.rvs(a - 1 / 2, np.sqrt(2 * delta * khi)) * np.sqrt(
-        khi / (2 * delta)
-    )
+    # khi = N / sigma2 * curr_beta**2
+    psi = np.zeros(len(N))
+    for i in range(len(N)):
+        psi[i] = gigrnd(a - 0.5, 2.0 * delta[i], N[i] * curr_beta[i] ** 2 / sigma2)
     psi[psi > 1] = 1
     return psi
 

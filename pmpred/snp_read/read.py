@@ -2,6 +2,7 @@
 
 import os
 from scipy.sparse import csr_matrix
+import scipy.sparse as sp
 import pandas_plink as ppl
 
 
@@ -63,6 +64,9 @@ def PM_read(precision_folder_path):
                 cols.append(int(col_idx))
                 data.append(value)
         PM_block["precision"] = csr_matrix((data, (rows, cols)))
+        PM_block["precision"] += PM_block["precision"].transpose() - sp.diags(
+            PM_block["precision"].diagonal()
+        )
         PM_block["filename"] = PM_file
         PM.append(PM_block)
         print("Read Precision matrix file:", PM_file)

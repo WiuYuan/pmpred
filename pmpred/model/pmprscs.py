@@ -1,7 +1,159 @@
 import numpy as np
-from scipy.stats import geninvgauss
 from joblib import Parallel, delayed
-from scipy.sparse.linalg import lgmres, gmres
+
+# from scipy.sparse.linalg import lcg, cg
+import math
+
+
+def psi(x, alpha, lam):
+    f = -alpha * (math.cosh(x) - 1.0) - lam * (math.exp(x) - x - 1.0)
+    return f
+
+
+def dpsi(x, alpha, lam):
+    f = -alpha * math.sinh(x) - lam * (math.exp(x) - 1.0)
+    return f
+
+
+def g(x, sd, td, f1, f2):
+    if (x >= -sd) and (x <= td):
+        f = 1.0
+    elif x > td:
+        f = f1
+    elif x < -sd:
+        f = f2
+
+    return f
+
+
+def gigrnd(p, a, b):
+    # setup -- sample from the two-parameter version gig(lam,omega)
+    p = float(p)
+    a = float(a)
+    b = float(b)
+    lam = p
+    omega = math.sqrt(a * b)
+
+    if lam < 0:
+        lam = -lam
+        swap = True
+    else:
+        swap = False
+
+    alpha = math.sqrt(math.pow(omega, 2) + math.pow(lam, 2)) - lam
+
+    # find t
+    x = -psi(1.0, alpha, lam)
+    if (x >= 0.5) and (x <= 2.0):
+        t = 1.0
+    elif x > 2.0:
+        if (alpha == 0) and (lam == 0):
+            t = 1.0
+        else:
+            t = math.sqrt(2.0 / (alpha + lam))
+    elif x < 0.5:
+        if (alpha == 0) and (lam == 0):
+            t = 1.0
+        else:
+            t = math.log(4.0 / (alpha + 2.0 * lam))
+
+    # find s
+    x = -psi(-1.0, alpha, lam)
+    if (x >= 0.5) and (x <= 2.0):
+        s = 1.0
+    elif x > 2.0:
+        if (alpha == 0) and (lam == 0):
+            s = 1.0
+        else:
+            s = math.sqrt(4.0 / (alpha * math.cosh(1) + lam))
+    elif x < 0.5:
+        if (alpha == 0) and (lam == 0):
+            s = 1.0
+        elif alpha == 0:
+            s = 1.0 / lam
+        elif lam == 0:
+            s = math.log(
+                1.0 + 1.0 / alpha + math.sqrt(1.0 / math.pow(alpha, 2) + 2.0 / alpha)
+            )
+        else:
+            s = min(
+                1.0 / lam,
+                math.log(
+                    1.0
+                    + 1.0 / alpha
+                    + math.sqrt(1.0 / math.pow(alpha, 2) + 2.0 / alpha)
+                ),
+            )
+
+    # find auxiliary parameters
+    eta = -psi(t, alpha, lam)
+    zeta = -dpsi(t, alpha, lam)
+    theta = -psi(-s, alpha, lam)
+    xi = dpsi(-s, alpha, lam)
+
+    p = 1.0 / xi
+    r = 1.0 / zeta
+
+    td = t - r * eta
+    sd = s - p * theta
+    q = td + sd
+
+    # random variate generation
+    while True:
+        U = np.random.random()
+        V = np.random.random()
+        W = np.random.random()
+        if U < q / (p + q + r):
+            rnd = -sd + q * V
+        elif U < (q + r) / (p + q + r):
+            rnd = td - r * math.log(V)
+        else:
+            rnd = -sd + p * math.log(V)
+
+        f1 = math.exp(-eta - zeta * (rnd - t))
+        f2 = math.exp(-theta + xi * (rnd + s))
+        if W * g(rnd, sd, td, f1, f2) <= math.exp(psi(rnd, alpha, lam)):
+            break
+
+    # transform back to the three-parameter version gig(p,a,b)
+    rnd = math.exp(rnd) * (
+        lam / omega + math.sqrt(1.0 + math.pow(lam, 2) / math.pow(omega, 2))
+    )
+    if swap:
+        rnd = 1.0 / rnd
+
+    rnd = rnd / math.sqrt(a / b)
+    return rnd
+
+
+def cg(P, b, rtol, maxiter=1000):
+    bnrm2 = np.linalg.norm(b)
+    x = np.zeros(P.shape[0])
+    if bnrm2 == 0:
+        return x
+    atol = bnrm2 * rtol
+    r = b.copy()
+    for iteration in range(maxiter):
+        if np.linalg.norm(r) < atol:
+            return x
+
+        z = r.copy()
+        rho_cur = np.dot(r, z)
+        if iteration > 0:
+            beta = rho_cur / rho_prev
+            p *= beta
+            p += z
+        else:
+            p = np.empty_like(r)
+            p[:] = z[:]
+
+        q = P.dot(p)
+        alpha = rho_cur / np.dot(p, q)
+        x += alpha * p
+        r -= alpha * q
+        rho_prev = rho_cur
+    print("A")
+    return x
 
 
 def sparse_LD_times(P, x, Pidn0, para):
@@ -9,7 +161,7 @@ def sparse_LD_times(P, x, Pidn0, para):
         return np.array([])
     y = np.zeros(P.shape[0])
     y[Pidn0] = x
-    return gmres(P, y, rtol=para["rtol"])[0][Pidn0]
+    return cg(P, y, rtol=para["rtol"])[Pidn0]
 
 
 def pmprscs_Q_times(P, x, psi, Pid, para):
@@ -17,7 +169,7 @@ def pmprscs_Q_times(P, x, psi, Pid, para):
         return np.array([])
     y = np.zeros(P.shape[0])
     y[Pid] = x * np.sqrt(psi)
-    return np.sqrt(psi) * gmres(P, y, rtol=para["rtol"])[0][Pid]
+    return np.sqrt(psi) * cg(P, y, rtol=para["rtol"])[Pid]
 
 
 def pmprscs_auto_subprocess_beta(subinput):
@@ -39,7 +191,7 @@ def pmprscs_auto_subprocess_beta(subinput):
     if i % 137 == 0:
         print("Run pmprscs_auto beta block:", i, "Iteration:", k, "Taylor:", l)
         print(max(curr_beta))
-    return curr_beta * np.sqrt(sigma2) / np.sqrt(np.sqrt(N)) + mu
+    return curr_beta * np.sqrt(psi) * np.sqrt(sigma2) / np.sqrt(np.sqrt(N)) + mu
 
 
 def pmprscs_auto_subprocess_sigma2(subinput):
@@ -57,10 +209,10 @@ def pmprscs_auto_subprocess_sigma2(subinput):
 
 def pmprscs_auto_subprocess_psi(subinput):
     N, sigma2, curr_beta, a, delta = subinput
-    khi = N / sigma2 * curr_beta**2
-    psi = geninvgauss.rvs(a - 1 / 2, np.sqrt(2 * delta * khi)) * np.sqrt(
-        khi / (2 * delta)
-    )
+    # khi = N / sigma2 * curr_beta**2
+    psi = np.zeros(len(N))
+    for i in range(len(N)):
+        psi[i] = gigrnd(a - 0.5, 2.0 * delta[i], N[i] * curr_beta[i] ** 2 / sigma2)
     psi[psi > 1] = 1
     return psi
 
@@ -147,15 +299,15 @@ def pmprscs_auto(PM, snplist, sumstats, para):
         sigma2 = 1 / np.random.gamma((N_total + M) / 2, 1 / err)
         subinput = []
         for i in range(len(PM)):
-            subinput.append((a, b, psi[i], phi))
-        delta = Parallel(n_jobs=para["n_jobs"])(
-            delayed(pmprscs_auto_subprocess_delta)(d) for d in subinput
-        )
-        subinput = []
-        for i in range(len(PM)):
             subinput.append((N[i], sigma2, curr_beta[i], a, delta[i]))
         psi = Parallel(n_jobs=para["n_jobs"])(
             delayed(pmprscs_auto_subprocess_psi)(d) for d in subinput
+        )
+        subinput = []
+        for i in range(len(PM)):
+            subinput.append((a, b, psi[i], phi))
+        delta = Parallel(n_jobs=para["n_jobs"])(
+            delayed(pmprscs_auto_subprocess_delta)(d) for d in subinput
         )
         sum_delta = 0
         for i in range(len(PM)):

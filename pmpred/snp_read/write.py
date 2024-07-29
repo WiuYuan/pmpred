@@ -47,6 +47,46 @@ def sumstats_write(sumstats, split, out_head_name, output_path):
             f.write("\n")
 
 
+def sumstats_set_write(sumstats_set, split, out_head_name, output_path):
+    with open(output_path, "w") as f:
+        for j in range(len(list(out_head_name.keys()))):
+            key = list(out_head_name.keys())[j]
+            f.write(out_head_name[key])
+            if j != len(list(out_head_name.keys())) - 1:
+                f.write(split)
+        f.write("\n")
+        for k in range(len(sumstats_set)):
+            sumstats = sumstats_set[k]
+            for i in range(len(sumstats["rsid"])):
+                for j in range(len(list(out_head_name.keys()))):
+                    key = list(out_head_name.keys())[j]
+                    if isinstance(sumstats[key][i], str):
+                        f.write(sumstats[key][i])
+                    elif isinstance(sumstats[key][i], int):
+                        f.write(f"{int(sumstats[key][i])}")
+                    else:
+                        f.write(f"{sumstats[key][i]:.6f}")
+                    if j != len(list(out_head_name.keys())) - 1:
+                        f.write(split)
+                f.write("\n")
+
+
+def phestats_write(phestats, split, output_path):
+    with open(output_path, "w") as f:
+        for i in range(len(phestats["phenotype"])):
+            for j in range(len(list(phestats.keys()))):
+                key = list(phestats.keys())[j]
+                if isinstance(phestats[key][i], str):
+                    f.write(phestats[key][i])
+                elif isinstance(phestats[key][i], int):
+                    f.write(f"{int(phestats[key][i])}")
+                else:
+                    f.write(f"{phestats[key][i]:.6f}")
+                if j != len(list(phestats.keys())) - 1:
+                    f.write(split)
+            f.write("\n")
+
+
 def PM_write(PM, output_folder_path):
     for i in range(len(PM)):
         with open(output_folder_path + "/" + PM[i]["filename"], "w") as f:

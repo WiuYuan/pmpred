@@ -39,8 +39,9 @@ def generate_sumstats_beta_from_PM(PM, snplist, para):
     return sumstats, beta_true
 
 
-def generate_sumstats_beta_from_bedstats(bedstats, snplist, para):
+def generate_sumstats_phestats_and_beta_from_bedstats(bedstats, snplist, para):
     sumstats = {}
+    phestats = {}
     print("Get the genotype matrix")
     genotype = bedstats["bed"].compute()
     geno_rsid = bedstats["bim"]["snp"].tolist()
@@ -67,23 +68,30 @@ def generate_sumstats_beta_from_bedstats(bedstats, snplist, para):
     z = (np.random.rand(M) < para["p"]).astype(int)
     beta_true_total = z * np.random.normal(0, sigma, M)
     R = genotype[bed_rsid, :]
-    nan_columns = np.any(np.isnan(R), axis=0)
-    R = R[:, ~nan_columns]
+    N = R.shape[1]
+    R[np.isnan(R)] = 0
+    D = R.copy()
     row_means = np.mean(R, axis=1, keepdims=True)
     R = R - row_means
     row_stds = np.sqrt(np.sum(np.square(R), axis=1, keepdims=True))
     R = R / row_stds
-    sumstats["beta"] = np.random.normal(size=M)
-    mean = R @ (R.T @ sumstats["beta"])
+    mean = R @ (R.T @ beta_true_total)
+    sumstats["beta"] = np.random.normal(0, 1, size=N)
     sumstats["beta"] = (
-        mean + np.sqrt((1 - para["h2"]) / para["N"]) * R.T @ sumstats["beta"]
+        mean + np.sqrt((1 - para["h2"]) / para["N"]) * R @ sumstats["beta"]
     ).tolist()
     sumstats["N"] = np.ones(M) * para["N"]
     sumstats["beta_se"] = np.ones(M)
     sumstats["rsid"] = bedstats["bim"]["snp"][bed_rsid].tolist()
     sumstats["REF"] = bedstats["bim"]["a0"][bed_rsid].tolist()
     sumstats["ALT"] = bedstats["bim"]["a1"][bed_rsid].tolist()
-    return sumstats, beta_true_total
+    iid = bedstats["fam"]["iid"].tolist()
+    phestats["iid1"] = [string.split("_")[0] for string in iid]
+    phestats["iid2"] = [string.split("_")[0] for string in iid]
+    phestats["phenotype"] = D.T @ beta_true_total + np.random.normal(
+        0, 1, size=len(phestats["iid1"])
+    ) * np.sqrt(1 - para["h2"])
+    return sumstats, phestats, beta_true_total
 
 
 def generate_phenotype(phestats, beta, para):
@@ -151,16 +159,16 @@ def get_para():
     para["block_num"] = 10
     para["burn_in"] = 50
     para["num_iter"] = 100
-    para["N"] = 1000
+    para["N"] = 500
     para["prop"] = 1
-    para["taylor_rtol"] = 0.01
+    para["taylor_rtol"] = 0.1
     para["h2_min"] = 0
     para["h2_max"] = 1
     para["p_min"] = 0
     para["p_max"] = 1
     para["prop"] = 0.1
     para["n_jobs"] = -1
-    para["rtol"] = 1e-10
+    para["rtol"] = 0.01
     para["prscs_a"] = 1.5
     para["prscs_b"] = 0.5
     para["output_key"] = ["rsid", "REF", "beta_joint"]

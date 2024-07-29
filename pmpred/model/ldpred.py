@@ -49,17 +49,18 @@ def ldpred_inf(PM, snplist, sumstats, para):
         beta = np.array(sumstats[i]["beta"]).astype(float)
         scale = np.sqrt(N * beta_se**2)
         beta_hat = beta / scale
-        subinput.append((PM[i], snplist[i], beta_hat, N, m / para["h2"], i, para))
+        subinput.append((PM[i], snplist[i], beta_hat, N, para["h2"] / m, i, para))
     results = Parallel(n_jobs=para["n_jobs"])(
         delayed(ldpred_inf_subprocess)(d) for d in subinput
     )
     for i in range(len(PM)):
         # LD = PM[i]["LD"][snplist[i]["index"]][:, snplist[i]["index"]]
-        # LD += eye(LD.shape[0], format="csr") * (m / (para["h2"] * para["N"]))
-        # beta_inf = spsolve(LD, beta_hat)
+        # LD += eye(LD.shape[0]) * (m / (para["h2"] * para["N"]))
+        # beta_inf = np.linalg.solve(LD, np.array(sumstats[i]["beta"]).astype(float))
         N = np.array(sumstats[i]["N"]).astype(float)
         beta_se = np.array(sumstats[i]["beta_se"]).astype(float)
         scale = np.sqrt(N * beta_se**2)
+        # beta_inf_set.append(beta_inf)
         beta_inf_set.append(results[i] * scale)
     return beta_inf_set, {"h2": para["h2"]}
 

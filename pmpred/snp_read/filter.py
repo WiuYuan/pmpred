@@ -39,11 +39,7 @@ def normalize_PM_subprocess(subinput):
     print("normalize_PM_subprocess block:", i)
     Pid = sorted(set(P.tocoo().row))
     D = np.zeros(P.shape[0])
-    D[Pid] = np.sqrt(
-        sp.linalg.spsolve(
-            P[Pid][:, Pid].tocsc(), sp.eye(len(Pid), format="csc")
-        ).diagonal()
-    )
+    D[Pid] = np.sqrt(np.linalg.inv(P[Pid][:, Pid].toarray()).diagonal())
     return P.multiply(np.outer(D, D)).tocsr()
 
 

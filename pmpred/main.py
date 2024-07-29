@@ -3,6 +3,7 @@
 import argparse
 import numpy as np
 import pmpred as pm
+import scipy.sparse as sp
 import time
 
 
@@ -369,9 +370,12 @@ def main():
     elif args.method == "normalizepm":
         if not args.pm:
             parser.error("You must specify a Precision Matrix Folder Path.")
-        PM = pm.Read.PM_read(args.pm)
-        pm.Filter.normalize_PM_parallel(PM, para)
-        pm.Write.PM_write(PM, args.out)
+        PM = pm.read.PM_read(args.pm)
+        for i in range(len(PM)):
+            P = PM[i]["precision"]
+            PM[i]["precision"] = P + P.transpose() - sp.diags(P.diagonal())
+        pm.filter.normalize_PM_parallel(PM, para)
+        pm.write.PM_write(PM, args.out)
     else:
         parser.error(
             "You must choose --method in {pmldpred_auto, pmldpred_grid, pmprscs_auto, ldpred_inf, normalizepm}"

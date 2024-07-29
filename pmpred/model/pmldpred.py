@@ -1,6 +1,37 @@
 import numpy as np
-from scipy.sparse.linalg import gmres
+
+# from scipy.sparse.linalg import cg
 from joblib import Parallel, delayed
+
+
+def cg(P, b, rtol, maxiter=1000):
+    bnrm2 = np.linalg.norm(b)
+    x = np.zeros(P.shape[0])
+    if bnrm2 == 0:
+        return x
+    atol = bnrm2 * rtol
+    r = b.copy()
+    for iteration in range(maxiter):
+        if np.linalg.norm(r) < atol:
+            return x
+
+        z = r.copy()
+        rho_cur = np.dot(r, z)
+        if iteration > 0:
+            beta = rho_cur / rho_prev
+            p *= beta
+            p += z
+        else:
+            p = np.empty_like(r)
+            p[:] = z[:]
+
+        q = P.dot(p)
+        alpha = rho_cur / np.dot(p, q)
+        x += alpha * p
+        r -= alpha * q
+        rho_prev = rho_cur
+    print("A")
+    return x
 
 
 def sparse_LD_times(P, x, Pidn0, para):
@@ -8,13 +39,13 @@ def sparse_LD_times(P, x, Pidn0, para):
         return np.array([])
     y = np.zeros(P.shape[0])
     y[Pidn0] = x
-    return gmres(P, y, rtol=para["rtol"])[0][Pidn0]
+    return cg(P, y, rtol=para["rtol"])[Pidn0]
 
 
 def pmpred_Q_times(P, x, n, Pid, sigma2, para):
     y = np.zeros(P.shape[0])
     y[Pid] = x * np.sqrt(n)
-    return sigma2 * np.sqrt(n) * gmres(P, y, rtol=para["rtol"])[0][Pid]
+    return sigma2 * np.sqrt(n) * cg(P, y, rtol=para["rtol"])[Pid]
 
 
 def pmpred_grid_subprocess(subinput):
@@ -158,11 +189,11 @@ def pmpred_auto_subprocess(subinput):
         i,
         k,
     ) = subinput
-    res_beta_hat = beta_hat * np.sqrt(1 - h2) - (R_curr_beta - curr_beta)
+    # res_beta_hat = beta_hat * np.sqrt(1 - h2) - (R_curr_beta - curr_beta)
     # res_beta_hat = np.sqrt(1 - h2) * (beta_hat - R_curr_beta) + curr_beta
-    # res_beta_hat = beta_hat - (R_curr_beta - curr_beta)
-    n = N / (1 - h2)
-    # n = N
+    res_beta_hat = beta_hat - (R_curr_beta - curr_beta)
+    # n = N / (1 - h2)
+    n = N
     C1 = h2_per_var * n
     C2 = 1 / (1 + 1 / C1)
     C3 = C2 * res_beta_hat
@@ -177,11 +208,11 @@ def pmpred_auto_subprocess(subinput):
     if len(Pidn0) != 0:
         P = PM["precision"].copy()
         P[Pidn0, Pidn0] += h2_per_var * n[idn0]
-        delta = np.sqrt(1 - h2) * beta_hat[idn0] * n[idn0]
+        # delta = np.sqrt(1 - h2) * beta_hat[idn0] * n[idn0]
         # delta = (
         #     np.sqrt(1 - h2) * beta_hat[idn0] + (1 - np.sqrt(1 - h2)) * R_curr_beta[idn0]
         # ) * n[idn0]
-        # delta = beta_hat[idn0] * n[idn0]
+        delta = beta_hat[idn0] * n[idn0]
         mean = h2_per_var * (
             delta - pmpred_Q_times(P, delta, n[idn0], Pidn0, h2_per_var, para)
         )
@@ -194,7 +225,7 @@ def pmpred_auto_subprocess(subinput):
         # mean = (
         #     h2_per_var
         #     * np.sqrt(n[idn0])
-        #     * gmres(P, PM["precision"].dot(alpha), rtol=para["rtol"])[0][Pidn0]
+        #     * cg(P, PM["precision"].dot(alpha), rtol=para["rtol"])[0][Pidn0]
         # )
         curr_beta[idn0] = np.random.randn(len(idn0))
         x = curr_beta[idn0].copy()
