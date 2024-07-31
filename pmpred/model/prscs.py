@@ -194,7 +194,7 @@ def prscs_auto(PM, snplist, sumstats, para):
         for i in range(len(PM)):
             subinput.append(
                 (
-                    PM[i]["LD"][snplist[i]["index"]][:, snplist[i]["index"]],
+                    PM[i]["LD"],
                     sigma2,
                     N[i],
                     psi[i],
@@ -210,7 +210,7 @@ def prscs_auto(PM, snplist, sumstats, para):
                 (
                     curr_beta[i],
                     beta_hat[i],
-                    PM[i]["LD"][snplist[i]["index"]][:, snplist[i]["index"]],
+                    PM[i]["LD"],
                     psi[i],
                 )
             )
