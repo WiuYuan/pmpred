@@ -18,10 +18,10 @@ def sumstats_beta_write(sumstats, beta, output_path, run_time, outpara, head_nam
                         elif key == "N":
                             f.write(f"{int(sumstats[i][key][j])}\t")
                         else:
-                            f.write(f"{sumstats[i][key][j]:.6f}\t")
+                            f.write(f"{sumstats[i][key][j]:.11f}\t")
                     else:
                         f.write("NA\t")
-                f.write(f"{beta[i][j]:.6f}")
+                f.write(f"{beta[i][j]:.11f}")
                 f.write("\n")
 
 
@@ -41,7 +41,7 @@ def sumstats_write(sumstats, split, out_head_name, output_path):
                 elif key == "N":
                     f.write(f"{int(sumstats[key][i])}")
                 else:
-                    f.write(f"{sumstats[key][i]:.6f}")
+                    f.write(f"{sumstats[key][i]:.11f}")
                 if j != len(list(out_head_name.keys())) - 1:
                     f.write(split)
             f.write("\n")
@@ -65,7 +65,7 @@ def sumstats_set_write(sumstats_set, split, out_head_name, output_path):
                     elif isinstance(sumstats[key][i], int):
                         f.write(f"{int(sumstats[key][i])}")
                     else:
-                        f.write(f"{sumstats[key][i]:.6f}")
+                        f.write(f"{sumstats[key][i]:.11f}")
                     if j != len(list(out_head_name.keys())) - 1:
                         f.write(split)
                 f.write("\n")
@@ -81,7 +81,7 @@ def phestats_write(phestats, split, output_path):
                 elif isinstance(phestats[key][i], int):
                     f.write(f"{int(phestats[key][i])}")
                 else:
-                    f.write(f"{phestats[key][i]:.6f}")
+                    f.write(f"{phestats[key][i]:.11f}")
                 if j != len(list(phestats.keys())) - 1:
                     f.write(split)
             f.write("\n")
@@ -92,4 +92,4 @@ def PM_write(PM, output_folder_path):
         with open(output_folder_path + "/" + PM[i]["filename"], "w") as f:
             Q = PM[i]["precision"].tocoo()
             for (row, col), value in zip(zip(Q.row, Q.col), Q.data):
-                f.write(f"{row},{col},{value:.6f}\n")
+                f.write(f"{row},{col},{value:.11f}\n")
