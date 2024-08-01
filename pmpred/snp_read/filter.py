@@ -21,7 +21,7 @@ def filter_sumstats(sumstats):
     i = 0
     while i < len(sumstats["N"]):
         if (
-            int(sumstats["N"][i]) < N_mean / 3
+            float(sumstats["N"][i]) < N_mean / 3
             # and sumstats["REF"][i] in base_map.keys()
             # and sumstats["ALT"][i] in base_map.keys()
             and base_map[sumstats["REF"][i]] == sumstats["ALT"][i]
