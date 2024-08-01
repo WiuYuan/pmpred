@@ -1,37 +1,11 @@
 import numpy as np
+import scipy.sparse as sp
 
-# from scipy.sparse.linalg import cg
 from joblib import Parallel, delayed
 
 
-def cg(P, b, rtol, maxiter=1000):
-    bnrm2 = np.linalg.norm(b)
-    x = np.zeros(P.shape[0])
-    if bnrm2 == 0:
-        return x
-    atol = bnrm2 * rtol
-    r = b.copy()
-    for iteration in range(maxiter):
-        if np.linalg.norm(r) < atol:
-            return x
-
-        z = r.copy()
-        rho_cur = np.dot(r, z)
-        if iteration > 0:
-            beta = rho_cur / rho_prev
-            p *= beta
-            p += z
-        else:
-            p = np.empty_like(r)
-            p[:] = z[:]
-
-        q = P.dot(p)
-        alpha = rho_cur / np.dot(p, q)
-        x += alpha * p
-        r -= alpha * q
-        rho_prev = rho_cur
-    print("A")
-    return x
+def upper_triangle(P, b):
+    return sp.linalg.spsolve_triangular(sp.triu(P), b, lower=False)
 
 
 def sparse_LD_times(P, x, Pidn0, para):
@@ -39,13 +13,13 @@ def sparse_LD_times(P, x, Pidn0, para):
         return np.array([])
     y = np.zeros(P.shape[0])
     y[Pidn0] = x
-    return cg(P, y, rtol=para["rtol"])[Pidn0]
+    return upper_triangle(P, y)[Pidn0]
 
 
 def pmpred_Q_times(P, x, n, Pid, sigma2, para):
     y = np.zeros(P.shape[0])
     y[Pid] = x * np.sqrt(n)
-    return sigma2 * np.sqrt(n) * cg(P, y, rtol=para["rtol"])[Pid]
+    return sigma2 * np.sqrt(n) * upper_triangle(P, y)[Pid]
 
 
 def pmpred_grid_subprocess(subinput):
@@ -190,10 +164,7 @@ def pmpred_auto_subprocess(subinput):
         k,
     ) = subinput
     res_beta_hat = beta_hat * np.sqrt(1 - h2) - (R_curr_beta - curr_beta)
-    # res_beta_hat = np.sqrt(1 - h2) * (beta_hat - R_curr_beta) + curr_beta
-    # res_beta_hat = beta_hat - (R_curr_beta - curr_beta)
     n = N / (1 - h2)
-    n = N
     C1 = h2_per_var * n
     C2 = 1 / (1 + 1 / C1)
     C3 = C2 * res_beta_hat
@@ -209,24 +180,9 @@ def pmpred_auto_subprocess(subinput):
         P = PM["precision"].copy()
         P[Pidn0, Pidn0] += h2_per_var * n[idn0]
         delta = np.sqrt(1 - h2) * beta_hat[idn0] * n[idn0]
-        # delta = (
-        #     np.sqrt(1 - h2) * beta_hat[idn0] + (1 - np.sqrt(1 - h2)) * R_curr_beta[idn0]
-        # ) * n[idn0]
-        # delta = beta_hat[idn0] * n[idn0]
         mean = h2_per_var * (
             delta - pmpred_Q_times(P, delta, n[idn0], Pidn0, h2_per_var, para)
         )
-        # mean = np.linalg.solve(
-        #     PM["LD"][Pidn0][:, Pidn0].toarray() + np.diag(1 / (h2_per_var * n[idn0])),
-        #     beta_hat[idn0],
-        # )
-        # alpha = np.zeros(P.shape[0])
-        # alpha[Pidn0] = np.sqrt(1 - h2) * beta_hat[idn0] * np.sqrt(n[idn0])
-        # mean = (
-        #     h2_per_var
-        #     * np.sqrt(n[idn0])
-        #     * cg(P, PM["precision"].dot(alpha), rtol=para["rtol"])[0][Pidn0]
-        # )
         curr_beta[idn0] = np.random.randn(len(idn0))
         x = curr_beta[idn0].copy()
         l = 1

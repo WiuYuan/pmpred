@@ -8,5 +8,6 @@ from pmpred.model import ldpred
 from pmpred.model import pmldpred
 from pmpred.model import prscs
 from pmpred.model import pmprscs
+from pmpred.model import epmldpred
 
 from pmpred.simulation import generate

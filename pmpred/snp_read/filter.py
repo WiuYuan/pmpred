@@ -54,6 +54,27 @@ def normalize_PM_parallel(PM, para):
         PM[i]["precision"] = results[i]
 
 
+def enormalize_PM_subprocess(subinput):
+    P, i = subinput
+    P = sp.triu(P).tocsr()
+    print("enormalize_PM_subprocess block:", i)
+    Pid = sorted(set(P.tocoo().row))
+    D = np.zeros(P.shape[0])
+    D[Pid] = np.sqrt(np.linalg.inv(P[Pid][:, Pid].toarray()).diagonal())
+    return P.multiply(np.outer(D, D)).tocsr()
+
+
+def enormalize_PM_parallel(PM, para):
+    subinput = []
+    for i in range(len(PM)):
+        subinput.append((PM[i]["precision"], i))
+    results = Parallel(n_jobs=para["n_jobs"])(
+        delayed(enormalize_PM_subprocess)(d) for d in subinput
+    )
+    for i in range(len(PM)):
+        PM[i]["precision"] = results[i]
+
+
 def normalize_dense_matrix(A):
     diag_elements = np.diag(A)
     sqrt_diag_outer = np.sqrt(np.outer(diag_elements, diag_elements))
