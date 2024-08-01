@@ -17,7 +17,7 @@ def filter_by_PM(PM, snplist):
 
 def filter_sumstats(sumstats):
     base_map = {"A": "T", "T": "A", "C": "G", "G": "C"}
-    N_mean = np.sum(np.array(sumstats["N"]).astype(int)) / len(sumstats["N"])
+    N_mean = np.sum(np.array(sumstats["N"]).astype(float)) / len(sumstats["N"])
     i = 0
     while i < len(sumstats["N"]):
         if (
