@@ -189,10 +189,10 @@ def pmpred_auto_subprocess(subinput):
         i,
         k,
     ) = subinput
-    res_beta_hat = beta_hat * np.sqrt(1 - h2) - (R_curr_beta - curr_beta)
+    # res_beta_hat = beta_hat * np.sqrt(1 - h2) - (R_curr_beta - curr_beta)
     # res_beta_hat = np.sqrt(1 - h2) * (beta_hat - R_curr_beta) + curr_beta
-    # res_beta_hat = beta_hat - (R_curr_beta - curr_beta)
-    n = N / (1 - h2)
+    res_beta_hat = beta_hat - (R_curr_beta - curr_beta)
+    # n = N / (1 - h2)
     n = N
     C1 = h2_per_var * n
     C2 = 1 / (1 + 1 / C1)
