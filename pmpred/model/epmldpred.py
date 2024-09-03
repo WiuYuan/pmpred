@@ -13,13 +13,17 @@ def sparse_LD_times(P, x, Pidn0, para):
         return np.array([])
     y = np.zeros(P.shape[0])
     y[Pidn0] = x
-    return sp.linalg.gmres(P, y)[0][Pidn0]
+    return sp.linalg.gmres(P, y, rtol=para["rtol"], maxiter=para["subiter"])[0][Pidn0]
 
 
 def pmpred_Q_times(P, x, n, Pid, sigma2, para):
     y = np.zeros(P.shape[0])
     y[Pid] = x * np.sqrt(n)
-    return sigma2 * np.sqrt(n) * sp.linalg.gmres(P, y)[0][Pid]
+    return (
+        sigma2
+        * np.sqrt(n)
+        * sp.linalg.gmres(P, y, rtol=para["rtol"], maxiter=para["subiter"])[0][Pid]
+    )
 
 
 def pmpred_grid_subprocess(subinput):
