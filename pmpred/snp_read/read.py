@@ -165,7 +165,7 @@ def ePM_read(precision_folder_path):
                 cols.append(int(col_idx))
                 data.append(value)
         PM_block["precision"] = csr_matrix((data, (rows, cols)))
-        D = 1 / np.sqrt(PM_block["precision"].diagonal())
+        D = 1 / np.sqrt(np.maximum(PM_block["precision"].diagonal(), 1e-7))
         PM_block["precision"] = (
             PM_block["precision"].multiply(D.reshape(1, -1)).multiply(D.reshape(-1, 1))
         )
