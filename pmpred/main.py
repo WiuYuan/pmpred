@@ -154,6 +154,7 @@ def main():
         "ALT": args.ALTname,
         "p": args.pname,
         "z": args.zname,
+        "N": args.Nname,
     }
     if args.method == "pmldpred_auto":
         if not args.pm:
