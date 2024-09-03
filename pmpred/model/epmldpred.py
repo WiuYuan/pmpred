@@ -4,8 +4,8 @@ import scipy.sparse as sp
 from joblib import Parallel, delayed
 
 
-def upper_triangle(P, b):
-    return sp.linalg.spsolve_triangular(sp.triu(P), b, lower=False)
+# def upper_triangle(P, b):
+#     return sp.linalg.spsolve_triangular(sp.triu(P), b, lower=False)
 
 
 def sparse_LD_times(P, x, Pidn0, para):
@@ -13,13 +13,13 @@ def sparse_LD_times(P, x, Pidn0, para):
         return np.array([])
     y = np.zeros(P.shape[0])
     y[Pidn0] = x
-    return upper_triangle(P, y)[Pidn0]
+    return sp.linalg.gmres(P, y)[0][Pidn0]
 
 
 def pmpred_Q_times(P, x, n, Pid, sigma2, para):
     y = np.zeros(P.shape[0])
     y[Pid] = x * np.sqrt(n)
-    return sigma2 * np.sqrt(n) * upper_triangle(P, y)[Pid]
+    return sigma2 * np.sqrt(n) * sp.linalg.gmres(P, y)[0][Pid]
 
 
 def pmpred_grid_subprocess(subinput):

@@ -11,3 +11,4 @@ simu.py
 *.ipynb
 dupli.py
 PMpred.egg-info
+test.sh

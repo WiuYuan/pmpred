@@ -1,6 +1,6 @@
 import numpy as np
 
-# from scipy.sparse.linalg import cg
+from scipy.sparse.linalg import bicg, lsqr
 from joblib import Parallel, delayed
 
 
@@ -39,13 +39,19 @@ def sparse_LD_times(P, x, Pidn0, para):
         return np.array([])
     y = np.zeros(P.shape[0])
     y[Pidn0] = x
-    return cg(P, y, rtol=para["rtol"])[Pidn0]
+    return lsqr(P, y, iter_lim=para["subiter"])[0][Pidn0]
+    # return bicg(P, y, rtol=para["rtol"], maxiter=para["subiter"])[0][Pidn0]
 
 
 def pmpred_Q_times(P, x, n, Pid, sigma2, para):
     y = np.zeros(P.shape[0])
     y[Pid] = x * np.sqrt(n)
-    return sigma2 * np.sqrt(n) * cg(P, y, rtol=para["rtol"])[Pid]
+    return (
+        sigma2
+        * np.sqrt(n)
+        * lsqr(P, y, iter_lim=para["subiter"])[0][Pid]
+        # * bicg(P, y, rtol=para["rtol"], maxiter=para["subiter"])[0][Pid]
+    )
 
 
 def pmpred_grid_subprocess(subinput):
@@ -238,8 +244,7 @@ def pmpred_auto_subprocess(subinput):
             )
             curr_beta[idn0] += x
             l += 1
-        if i % 137 == 0:
-            print("Run ldpred_auto block:", i, "Iteration:", k, "Taylor:", l)
+        print("Run ldpred_auto block:", i, "Iteration:", k, "Taylor:", l)
         curr_beta[idn0] *= np.sqrt(h2_per_var)
         curr_beta[idn0] += mean
         mean_beta[idn0] = mean

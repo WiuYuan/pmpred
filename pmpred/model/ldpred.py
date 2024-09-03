@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse.linalg import spsolve, gmres
+from scipy.sparse.linalg import spsolve, gmres, bicg
 from scipy.sparse import csr_matrix, eye
 from joblib import Parallel, delayed
 
@@ -14,7 +14,9 @@ def get_marginal_beta(sumstats):
 def pmpred_Q_times(P, x, n, Pid, sigma2, para):
     y = np.zeros(P.shape[0])
     y[Pid] = x * np.sqrt(n)
-    return sigma2 * np.sqrt(n) * gmres(P, y, rtol=para["rtol"])[0][Pid]
+    u, info = bicg(P, y, rtol=para["rtol"], maxiter=para["subiter"])
+    print("Solver info:", info)
+    return sigma2 * np.sqrt(n) * u[Pid]
 
 
 def ldpred_inf_subprocess(subinput):
@@ -23,8 +25,7 @@ def ldpred_inf_subprocess(subinput):
         return np.array([])
     P = PM["precision"].copy()
     P[snplist["index"], snplist["index"]] += sigma2 * N
-    if i % 100 == 0:
-        print("ldpred_inf_subprocess block:", i)
+    print("ldpred_inf_subprocess block:", i)
     return (
         sigma2
         * np.sqrt(N)

@@ -83,6 +83,12 @@ def main():
         help="The number of iterations used by the Gibbs sampler. The default is 100.",
     )
     parser.add_argument(
+        "--subiter",
+        type=int,
+        default=100,
+        help="The number of iterations used by solving linear equation. The default is 100.",
+    )
+    parser.add_argument(
         "--taylor",
         type=float,
         default=0.001,
@@ -113,11 +119,6 @@ def main():
         help="The method we use in PMpred, contain {pmldpred_auto, pmldpred_grid, pmprscs, ldpred_inf, normalizepm}. The default is pmldpred_auto",
     )
     parser.add_argument(
-        "--unnormal",
-        action="store_true",
-        help="If select, then will not do normalization step for Precision Matrix",
-    )
-    parser.add_argument(
         "--usepvalue",
         action="store_true",
         help="If select, then will use p value and z scores to generate beta and beta_se",
@@ -144,6 +145,7 @@ def main():
     para["n_jobs"] = args.njobs
     para["rtol"] = args.rtol
     para["prop"] = args.prop
+    para["subiter"] = args.subiter
     head_name = {
         "rsid": args.rsidname,
         "beta": args.betaname,
@@ -170,8 +172,6 @@ def main():
         snplist = pm.read.snplist_read(args.snp)
         pm.filter.filter_by_PM(PM, snplist)
         pm.filter.filter_by_unique_snplist(snplist)
-        if not args.unnormal:
-            pm.filter.normalize_PM_parallel(PM, para)
         sumstats = pm.filter.filter_by_sumstats_parallel(
             PM, snplist, sumstats_list, para
         )
@@ -207,8 +207,6 @@ def main():
         snplist = pm.read.snplist_read(args.snp)
         pm.filter.filter_by_PM(PM, snplist)
         pm.filter.filter_by_unique_snplist(snplist)
-        if not args.unnormal:
-            pm.filter.normalize_PM_parallel(PM, para)
         sumstats = pm.filter.filter_by_sumstats_parallel(
             PM, snplist, sumstats_list, para
         )
@@ -244,8 +242,6 @@ def main():
         snplist = pm.read.snplist_read(args.snp)
         pm.filter.filter_by_PM(PM, snplist)
         pm.filter.filter_by_unique_snplist(snplist)
-        if not args.unnormal:
-            pm.filter.normalize_PM_parallel(PM, para)
         sumstats = pm.filter.filter_by_sumstats_parallel(
             PM, snplist, sumstats_list, para
         )
@@ -280,8 +276,6 @@ def main():
         snplist = pm.read.snplist_read(args.snp)
         pm.filter.filter_by_PM(PM, snplist)
         pm.filter.filter_by_unique_snplist(snplist)
-        if not args.unnormal:
-            pm.filter.normalize_PM_parallel(PM, para)
         sumstats = pm.filter.filter_by_sumstats_parallel(
             PM, snplist, sumstats_list, para
         )
@@ -317,8 +311,6 @@ def main():
         snplist = pm.read.snplist_read(args.snp)
         pm.filter.filter_by_PM(PM, snplist)
         pm.filter.filter_by_unique_snplist(snplist)
-        if not args.unnormal:
-            pm.filter.normalize_PM_parallel(PM, para)
         sumstats = pm.filter.filter_by_sumstats_parallel(
             PM, snplist, sumstats_list, para
         )
@@ -416,12 +408,10 @@ def main():
             pm.generate.generate_N_in_sumstats_list(sumstats_list, args.N)
         pm.filter.filter_sumstats(sumstats_list)
         pm.filter.filter_by_unique_sumstats(sumstats_list)
-        PM = pm.read.PM_read(args.pm)
-        snplist = pm.read.snplist_read(args.snp)
+        PM = pm.read.ePM_read(args.pm)
+        snplist = pm.read.esnplist_read(args.snp)
         pm.filter.filter_by_PM(PM, snplist)
         pm.filter.filter_by_unique_snplist(snplist)
-        if not args.unnormal:
-            pm.filter.normalize_PM_parallel(PM, para)
         sumstats = pm.filter.filter_by_sumstats_parallel(
             PM, snplist, sumstats_list, para
         )

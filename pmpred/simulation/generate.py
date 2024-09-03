@@ -32,7 +32,7 @@ def generate_sumstats_beta_from_PM(PM, snplist, para):
         beta_true[i] = np.array(beta_true[i])
         R = PM[i]["LD"]
         sumstats_block["beta"] = np.random.multivariate_normal(
-            R @ beta_true[i], R * (1 - para["h2"]) / para["N"]
+            R @ beta_true[i], R / para["N"]
         ).tolist()
         sumstats.append(sumstats_block)
 
@@ -159,6 +159,7 @@ def get_para():
     para["block_num"] = 10
     para["burn_in"] = 50
     para["num_iter"] = 100
+    para["subiter"] = 1000
     para["N"] = 500
     para["prop"] = 1
     para["taylor_rtol"] = 0.1
