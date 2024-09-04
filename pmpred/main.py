@@ -180,7 +180,7 @@ def main():
         pm.filter.filter_sumstats(sumstats_list)
         pm.filter.filter_by_unique_sumstats(sumstats_list)
         if args.useprevread:
-            PM = pm.read.ePM_read(args.pm)
+            PM = pm.read.ePM_read(args.pm, args.upper)
             snplist = pm.read.esnplist_read(args.snp)
         else:
             PM = pm.read.PM_read(args.pm)
@@ -219,7 +219,7 @@ def main():
         pm.filter.filter_sumstats(sumstats_list)
         pm.filter.filter_by_unique_sumstats(sumstats_list)
         if args.useprevread:
-            PM = pm.read.ePM_read(args.pm)
+            PM = pm.read.ePM_read(args.pm, args.upper)
             snplist = pm.read.esnplist_read(args.snp)
         else:
             PM = pm.read.PM_read(args.pm)
