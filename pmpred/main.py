@@ -124,6 +124,11 @@ def main():
         help="If select, then will use p value and z scores to generate beta and beta_se",
     )
     parser.add_argument(
+        "--useprevread",
+        action="store_true",
+        help="If select, then will read snplist and precision matrix from ldgm format",
+    )
+    parser.add_argument(
         "--rtol",
         type=float,
         default=1e-10,
@@ -169,8 +174,12 @@ def main():
             pm.generate.generate_N_in_sumstats_list(sumstats_list, args.N)
         pm.filter.filter_sumstats(sumstats_list)
         pm.filter.filter_by_unique_sumstats(sumstats_list)
-        PM = pm.read.PM_read(args.pm)
-        snplist = pm.read.snplist_read(args.snp)
+        if args.useprevread:
+            PM = pm.read.ePM_read(args.pm)
+            snplist = pm.read.esnplist_read(args.snp)
+        else:
+            PM = pm.read.PM_read(args.pm)
+            snplist = pm.read.snplist_read(args.snp)
         pm.filter.filter_by_PM(PM, snplist)
         pm.filter.filter_by_unique_snplist(snplist)
         sumstats = pm.filter.filter_by_sumstats_parallel(
@@ -204,8 +213,12 @@ def main():
             pm.generate.generate_N_in_sumstats_list(sumstats_list, args.N)
         pm.filter.filter_sumstats(sumstats_list)
         pm.filter.filter_by_unique_sumstats(sumstats_list)
-        PM = pm.read.PM_read(args.pm)
-        snplist = pm.read.snplist_read(args.snp)
+        if args.useprevread:
+            PM = pm.read.ePM_read(args.pm)
+            snplist = pm.read.esnplist_read(args.snp)
+        else:
+            PM = pm.read.PM_read(args.pm)
+            snplist = pm.read.snplist_read(args.snp)
         pm.filter.filter_by_PM(PM, snplist)
         pm.filter.filter_by_unique_snplist(snplist)
         sumstats = pm.filter.filter_by_sumstats_parallel(
@@ -239,8 +252,12 @@ def main():
             pm.generate.generate_N_in_sumstats_list(sumstats_list, args.N)
         pm.filter.filter_sumstats(sumstats_list)
         pm.filter.filter_by_unique_sumstats(sumstats_list)
-        PM = pm.read.PM_read(args.pm)
-        snplist = pm.read.snplist_read(args.snp)
+        if args.useprevread:
+            PM = pm.read.ePM_read(args.pm)
+            snplist = pm.read.esnplist_read(args.snp)
+        else:
+            PM = pm.read.PM_read(args.pm)
+            snplist = pm.read.snplist_read(args.snp)
         pm.filter.filter_by_PM(PM, snplist)
         pm.filter.filter_by_unique_snplist(snplist)
         sumstats = pm.filter.filter_by_sumstats_parallel(
@@ -273,8 +290,12 @@ def main():
             pm.generate.generate_N_in_sumstats_list(sumstats_list, args.N)
         pm.filter.filter_sumstats(sumstats_list)
         pm.filter.filter_by_unique_sumstats(sumstats_list)
-        PM = pm.read.PM_read(args.pm)
-        snplist = pm.read.snplist_read(args.snp)
+        if args.useprevread:
+            PM = pm.read.ePM_read(args.pm)
+            snplist = pm.read.esnplist_read(args.snp)
+        else:
+            PM = pm.read.PM_read(args.pm)
+            snplist = pm.read.snplist_read(args.snp)
         pm.filter.filter_by_PM(PM, snplist)
         pm.filter.filter_by_unique_snplist(snplist)
         sumstats = pm.filter.filter_by_sumstats_parallel(
@@ -308,8 +329,12 @@ def main():
             pm.generate.generate_N_in_sumstats_list(sumstats_list, args.N)
         pm.filter.filter_sumstats(sumstats_list)
         pm.filter.filter_by_unique_sumstats(sumstats_list)
-        PM = pm.read.PM_read(args.pm)
-        snplist = pm.read.snplist_read(args.snp)
+        if args.useprevread:
+            PM = pm.read.ePM_read(args.pm)
+            snplist = pm.read.esnplist_read(args.snp)
+        else:
+            PM = pm.read.PM_read(args.pm)
+            snplist = pm.read.snplist_read(args.snp)
         pm.filter.filter_by_PM(PM, snplist)
         pm.filter.filter_by_unique_snplist(snplist)
         sumstats = pm.filter.filter_by_sumstats_parallel(
@@ -341,8 +366,12 @@ def main():
             pm.generate.generate_N_in_sumstats_list(sumstats_list, args.N)
         pm.filter.filter_sumstats(sumstats_list)
         pm.filter.filter_by_unique_sumstats(sumstats_list)
-        PM = pm.read.PM_read(args.pm)
-        snplist = pm.read.snplist_read(args.snp)
+        if args.useprevread:
+            PM = pm.read.ePM_read(args.pm)
+            snplist = pm.read.esnplist_read(args.snp)
+        else:
+            PM = pm.read.PM_read(args.pm)
+            snplist = pm.read.snplist_read(args.snp)
         pm.filter.filter_by_PM(PM, snplist)
         pm.filter.filter_by_unique_snplist(snplist)
         sumstats = pm.filter.filter_by_sumstats_parallel(
@@ -375,8 +404,12 @@ def main():
             pm.generate.generate_N_in_sumstats_list(sumstats_list, args.N)
         pm.filter.filter_sumstats(sumstats_list)
         pm.filter.filter_by_unique_sumstats(sumstats_list)
-        PM = pm.read.PM_read(args.pm)
-        snplist = pm.read.snplist_read(args.snp)
+        if args.useprevread:
+            PM = pm.read.ePM_read(args.pm)
+            snplist = pm.read.esnplist_read(args.snp)
+        else:
+            PM = pm.read.PM_read(args.pm)
+            snplist = pm.read.snplist_read(args.snp)
         pm.filter.filter_by_PM(PM, snplist)
         pm.filter.filter_by_unique_snplist(snplist)
         sumstats = pm.filter.filter_by_sumstats_parallel(
@@ -409,8 +442,12 @@ def main():
             pm.generate.generate_N_in_sumstats_list(sumstats_list, args.N)
         pm.filter.filter_sumstats(sumstats_list)
         pm.filter.filter_by_unique_sumstats(sumstats_list)
-        PM = pm.read.ePM_read(args.pm)
-        snplist = pm.read.esnplist_read(args.snp)
+        if args.useprevread:
+            PM = pm.read.ePM_read(args.pm)
+            snplist = pm.read.esnplist_read(args.snp)
+        else:
+            PM = pm.read.PM_read(args.pm)
+            snplist = pm.read.snplist_read(args.snp)
         pm.filter.filter_by_PM(PM, snplist)
         pm.filter.filter_by_unique_snplist(snplist)
         sumstats = pm.filter.filter_by_sumstats_parallel(
