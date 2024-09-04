@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse.linalg import spsolve, gmres, bicg
+import scipy.sparse as sp
 from scipy.sparse import csr_matrix, eye
 from joblib import Parallel, delayed
 
@@ -14,8 +14,7 @@ def get_marginal_beta(sumstats):
 def pmpred_Q_times(P, x, n, Pid, sigma2, para):
     y = np.zeros(P.shape[0])
     y[Pid] = x * np.sqrt(n)
-    u, info = bicg(P, y, rtol=para["rtol"], maxiter=para["subiter"])
-    print("Solver info:", info)
+    u = sp.linalg.lsqr(P, y, atol=para["rtol"], iter_lim=para["subiter"])[0]
     return sigma2 * np.sqrt(n) * u[Pid]
 
 
