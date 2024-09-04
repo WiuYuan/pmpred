@@ -143,7 +143,7 @@ def symmetrize_sparse_matrix(A):
     return A_updated
 
 
-def ePM_read(precision_folder_path):
+def ePM_read(precision_folder_path, upper):
     print("Read precision matrix from", precision_folder_path)
     PM = []
     for PM_file in sorted(
@@ -169,6 +169,12 @@ def ePM_read(precision_folder_path):
         PM_block["precision"] = (
             PM_block["precision"].multiply(D.reshape(1, -1)).multiply(D.reshape(-1, 1))
         )
+        if upper:
+            PM_block["precision"] = (
+                PM_block["precision"]
+                + PM_block["precision"].transpose()
+                - sp.diags(PM_block["precision"].diagonal())
+            )
         PM_block["precision"] = PM_block["precision"].tocsr()
         PM_block["filename"] = PM_file
         PM.append(PM_block)

@@ -129,6 +129,11 @@ def main():
         help="If select, then will read snplist and precision matrix from ldgm format",
     )
     parser.add_argument(
+        "--upper",
+        action="store_true",
+        help="If select, then will do P = P + P' - diag(P)",
+    )
+    parser.add_argument(
         "--rtol",
         type=float,
         default=1e-10,
@@ -253,7 +258,7 @@ def main():
         pm.filter.filter_sumstats(sumstats_list)
         pm.filter.filter_by_unique_sumstats(sumstats_list)
         if args.useprevread:
-            PM = pm.read.ePM_read(args.pm)
+            PM = pm.read.ePM_read(args.pm, args.upper)
             snplist = pm.read.esnplist_read(args.snp)
         else:
             PM = pm.read.PM_read(args.pm)
@@ -291,7 +296,7 @@ def main():
         pm.filter.filter_sumstats(sumstats_list)
         pm.filter.filter_by_unique_sumstats(sumstats_list)
         if args.useprevread:
-            PM = pm.read.ePM_read(args.pm)
+            PM = pm.read.ePM_read(args.pm, args.upper)
             snplist = pm.read.esnplist_read(args.snp)
         else:
             PM = pm.read.PM_read(args.pm)
@@ -330,7 +335,7 @@ def main():
         pm.filter.filter_sumstats(sumstats_list)
         pm.filter.filter_by_unique_sumstats(sumstats_list)
         if args.useprevread:
-            PM = pm.read.ePM_read(args.pm)
+            PM = pm.read.ePM_read(args.pm, args.upper)
             snplist = pm.read.esnplist_read(args.snp)
         else:
             PM = pm.read.PM_read(args.pm)
@@ -367,7 +372,7 @@ def main():
         pm.filter.filter_sumstats(sumstats_list)
         pm.filter.filter_by_unique_sumstats(sumstats_list)
         if args.useprevread:
-            PM = pm.read.ePM_read(args.pm)
+            PM = pm.read.ePM_read(args.pm, args.upper)
             snplist = pm.read.esnplist_read(args.snp)
         else:
             PM = pm.read.PM_read(args.pm)
@@ -405,7 +410,7 @@ def main():
         pm.filter.filter_sumstats(sumstats_list)
         pm.filter.filter_by_unique_sumstats(sumstats_list)
         if args.useprevread:
-            PM = pm.read.ePM_read(args.pm)
+            PM = pm.read.ePM_read(args.pm, args.upper)
             snplist = pm.read.esnplist_read(args.snp)
         else:
             PM = pm.read.PM_read(args.pm)
@@ -443,7 +448,7 @@ def main():
         pm.filter.filter_sumstats(sumstats_list)
         pm.filter.filter_by_unique_sumstats(sumstats_list)
         if args.useprevread:
-            PM = pm.read.ePM_read(args.pm)
+            PM = pm.read.ePM_read(args.pm, args.upper)
             snplist = pm.read.esnplist_read(args.snp)
         else:
             PM = pm.read.PM_read(args.pm)
