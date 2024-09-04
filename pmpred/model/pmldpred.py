@@ -278,12 +278,12 @@ def pmldpred_auto(PM, snplist, sumstats, para):
         R_curr_beta.append(np.zeros(m))
         avg_beta.append(np.zeros(m))
         snplist[i]["index"] = np.array(snplist[i]["index"])
-    # h2_last = h2
+    h2_last = h2
     for k in range(-para["burn_in"], para["num_iter"]):
         Mc = 0
-        # h2 = min(h2, 1)
-        # h2 = (1 - para["prop"]) * h2_last + para["prop"] * h2
-        # h2_last = h2
+        h2 = min(h2, 1)
+        h2 = (1 - para["prop"]) * h2_last + para["prop"] * h2
+        h2_last = h2
         print("Run pmldpred_auto step:", k, "p:", p, "h2:", h2)
         h2_per_var = h2 / (M * p)
         inv_odd_p = (1 - p) / p
@@ -308,11 +308,11 @@ def pmldpred_auto(PM, snplist, sumstats, para):
         results = Parallel(n_jobs=para["n_jobs"])(
             delayed(pmpred_auto_subprocess)(d) for d in subinput
         )
-        # h2 = 0
+        h2 = 0
         for i in range(len(PM)):
             curr_beta[i], R_curr_beta[i], Mc_add, h2_add, mean_beta = results[i]
             Mc += Mc_add
-            # h2 += h2_add
+            h2 += h2_add
             if k >= 0:
                 avg_beta[i] += mean_beta
         p = np.random.beta(1 + Mc, 1 + M - Mc)
